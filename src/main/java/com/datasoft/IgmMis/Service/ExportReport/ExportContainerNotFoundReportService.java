@@ -166,7 +166,31 @@ public class ExportContainerNotFoundReportService {
 //                        "INNER JOIN srv_event ON srv_event.applied_to_gkey=inv_unit.gkey\n" +
 //                        "WHERE to_char(srv_event.placed_time,'YYYY-MM-DD HH24-MI-SS')  BETWEEN '"+fromDate+"' and '"+toDate+"' and vsl_vessel_visit_details.vvd_gkey='"+vvdgkey+"'";
 
-       
+        sqlQuery="select * from(\n" +
+                "SELECT inv_unit.id AS id,\n" +
+                "inv_unit_fcy_visit.time_in AS fcy_time_in,\n" +
+                "inv_unit_fcy_visit.transit_state AS fcy_transit_state,\n" +
+                "inv_unit_fcy_visit.ARRIVE_POS_SLOT as stowage_pos,inv_unit_fcy_visit.last_pos_slot, inv_unit_fcy_visit.LAST_POS_LOCTYPE AS coming_from ,\n" +
+                "ref_equip_type.id AS iso,ref_bizunit_scoped.id AS mlo, REF_ROUTING_POINT.ID as pod,vsl_vessel_visit_details.vvd_gkey,vsl_vessel_visit_details.ib_vyg as rot,\n" +
+                "inv_unit.freight_kind,\n" +
+                "inv_unit.goods_and_ctr_wt_kg as weight,\n" +
+                "srv_event.placed_time,\n" +
+                "inv_unit_fcy_visit.flex_date01 AS assignmentdate ,\n" +
+                "ref_commodity.short_name\n" +
+                "FROM inv_unit \n" +
+                "INNER JOIN inv_unit_fcy_visit ON inv_unit_fcy_visit.unit_gkey=inv_unit.gkey \n" +
+                "INNER JOIN argo_carrier_visit ON argo_carrier_visit.gkey=inv_unit_fcy_visit.actual_ib_cv\n" +
+                "INNER JOIN vsl_vessel_visit_details ON argo_carrier_visit.cvcvd_gkey=vsl_vessel_visit_details.vvd_gkey\n" +
+                "INNER JOIN vsl_vessels ON vsl_vessels.gkey=vsl_vessel_visit_details.vessel_gkey \n" +
+                "INNER JOIN ref_bizunit_scoped ON ref_bizunit_scoped.gkey=inv_unit.line_op\n" +
+                "INNER JOIN inv_goods ON inv_goods.gkey=inv_unit.goods\n" +
+                "INNER JOIN ref_commodity ON ref_commodity.gkey=inv_goods.commodity_gkey \n" +
+                "INNER JOIN ref_equipment ON ref_equipment.gkey=INV_UNIT.eq_gkey\n" +
+                "INNER JOIN ref_equip_type ON ref_equip_type.gkey=ref_equipment.eqtyp_gkey\n" +
+                "INNER JOIN REF_ROUTING_POINT ON REF_ROUTING_POINT.GKEY=INV_UNIT.POD1_GKEY\n" +
+                "INNER JOIN srv_event ON srv_event.applied_to_gkey=inv_unit.gkey\n" +
+                "WHERE to_char(srv_event.placed_time,'YYYY-MM-DD')   between '"+fromDate+"' and '"+toDate+"' or vsl_vessel_visit_details.vvd_gkey='"+vvdgkey+"'\n" +
+                ")  tbl WHERE fcy_transit_state NOT IN ('S60_LOADED','S70_DEPARTED') ";
 
         List resultList=OracleDbTemplate.query(sqlQuery,new ExportContainerReportList());
         List listAll = (List) resultList.stream().collect(Collectors.toList());
